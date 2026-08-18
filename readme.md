@@ -1,4 +1,4 @@
-# Z GPT 
+# Z GPT..
 
 ## Run & Operate
 
