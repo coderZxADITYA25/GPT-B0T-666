@@ -32,6 +32,15 @@ const gemini = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null;
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_MODEL_LABEL = "Groq GPT-OSS 120B";
 
+function providerError(err: unknown): { status?: number; message: string } {
+  if (typeof err === "string") return { message: err };
+  if (err && typeof err === "object") {
+    const e = err as { status?: number; message?: string; error?: { message?: string } };
+    return { status: e.status, message: e.message ?? e.error?.message ?? "Unknown error" };
+  }
+  return { message: "Unknown error" };
+}
+
 const GEMINI_SAFETY_SETTINGS = [
   { category: HarmCategory.HARM_CATEGORY_HARASSMENT,        threshold: HarmBlockThreshold.BLOCK_NONE },
   { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,       threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -99,17 +108,19 @@ export async function pingProviders(): Promise<PingResult[]> {
     try {
       const res = await groq.chat.completions.create({
         model: GROQ_MODEL,
-        max_tokens: 5,
+        max_completion_tokens: 64,
+        reasoning_effort: "low",
+        reasoning_format: "hidden",
         messages: [{ role: "user", content: PING_MSG }],
       });
       const text = res.choices[0]?.message?.content ?? "";
       results.push({ name: GROQ_MODEL_LABEL, configured: true, ok: !!text, ms: Date.now() - t });
     } catch (err: unknown) {
-      const e = err as { message?: string; status?: number };
-      const isRate = e?.status === 429;
+      const e = providerError(err);
+      const isRate = e.status === 429;
       results.push({
         name: GROQ_MODEL_LABEL, configured: true, ok: false, ms: Date.now() - t,
-        error: isRate ? "Rate limited (wait 60s)" : e.message?.slice(0, 60),
+        error: isRate ? "Rate limited (wait 60s)" : e.message.slice(0, 120),
       });
     }
   }
@@ -168,7 +179,9 @@ async function tryGroq(
   if (!groq) throw new Error("Groq not configured");
   const response = await groq.chat.completions.create({
     model: GROQ_MODEL,
-    max_tokens: maxTokens,
+    max_completion_tokens: maxTokens,
+    reasoning_effort: "low",
+    reasoning_format: "hidden",
     messages: messages as Parameters<typeof groq.chat.completions.create>[0]["messages"],
   });
   const content = response.choices[0]?.message?.content ?? "";
