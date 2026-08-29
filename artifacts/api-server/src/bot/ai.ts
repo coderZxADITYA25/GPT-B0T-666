@@ -29,8 +29,8 @@ const openai = openRouterApiKey
 const groq = groqApiKey ? new Groq({ apiKey: groqApiKey }) : null;
 const gemini = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null;
 
-const GROQ_MODEL = "openai/gpt-oss-120b";
-const GROQ_MODEL_LABEL = "Groq GPT-OSS 120B";
+const GROQ_MODEL = "openai/gpt-oss-20b";
+const GROQ_MODEL_LABEL = "Groq GPT-OSS 20B";
 
 function providerError(err: unknown): { status?: number; message: string } {
   if (typeof err === "string") return { message: err };

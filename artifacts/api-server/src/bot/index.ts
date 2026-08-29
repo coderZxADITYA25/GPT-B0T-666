@@ -43,7 +43,7 @@ const HELP_KEYBOARD: InlineKeyboardMarkup = {
 function providerBadge(provider: AIProvider): string {
   return ({
     openai: `${E.star} <i>OpenAI GPT-4o</i>`,
-    groq:   `${E.lightning} <i>Groq GPT-OSS 120B</i>`,
+    groq:   `${E.lightning} <i>Groq GPT-OSS 20B</i>`,
     gemini: `${E.sparkles} <i>Google Gemini 2.0</i>`,
   })[provider];
 }
@@ -382,7 +382,7 @@ export function startBot(): TelegramBot | null {
         `${E.shield} <b>Z GPT — Provider Status</b>\n\n` +
         `<b>API Keys</b>\n` +
         `${dot(ps.gemini)} Gemini 2.0 Flash — ${label(ps.gemini)}\n` +
-        `${dot(ps.groq)}   Groq GPT-OSS 120B   — ${label(ps.groq)}\n` +
+        `${dot(ps.groq)}   Groq GPT-OSS 20B   — ${label(ps.groq)}\n` +
         `${dot(ps.openai)} OpenAI GPT-4o    — ${label(ps.openai)}\n\n` +
         `<b>Your Session</b>\n` +
         `• Mode: <code>${session.mode}</code>\n` +
@@ -449,7 +449,7 @@ export function startBot(): TelegramBot | null {
     if (!isAdmin(userId)) { await bot.sendMessage(chatId, `${E.ban} Unauthorized.`, { parse_mode: "HTML" }); return; }
     const s = getStats();
     await sendReply(chatId, userId,
-      `${E.stats} <b>Bot Statistics</b>\n\n${E.chart} <b>Users</b>\n• Total: <code>${s.totalUsers}</code>\n• Active (1h): <code>${s.activeUsers}</code>\n• Banned: <code>${s.bannedCount}</code>\n\n${E.terminal} <b>Activity</b>\n• Messages processed: <code>${s.totalMessages}</code>\n• Uptime: <code>${s.uptimeHours}h</code>\n\n${s.publicMode ? E.greencircle : E.redcircle} <b>Access Mode:</b> ${s.publicMode ? "Public (all users)" : "Private (admin only)"}\n\n${E.lightning} <b>AI Engines Active</b>\n• OpenAI GPT-4o ${E.star}\n• Groq GPT-OSS 120B ${E.lightning}\n• Gemini 2.0 ${E.sparkles}`,
+      `${E.stats} <b>Bot Statistics</b>\n\n${E.chart} <b>Users</b>\n• Total: <code>${s.totalUsers}</code>\n• Active (1h): <code>${s.activeUsers}</code>\n• Banned: <code>${s.bannedCount}</code>\n\n${E.terminal} <b>Activity</b>\n• Messages processed: <code>${s.totalMessages}</code>\n• Uptime: <code>${s.uptimeHours}h</code>\n\n${s.publicMode ? E.greencircle : E.redcircle} <b>Access Mode:</b> ${s.publicMode ? "Public (all users)" : "Private (admin only)"}\n\n${E.lightning} <b>AI Engines Active</b>\n• OpenAI GPT-4o ${E.star}\n• Groq GPT-OSS 20B ${E.lightning}\n• Gemini 2.0 ${E.sparkles}`,
       HELP_KEYBOARD,
     );
   });
