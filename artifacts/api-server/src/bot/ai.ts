@@ -8,7 +8,9 @@ import type { ChatCompletionMessageParam } from "openai/resources/chat/completio
 
 function readApiKey(...names: string[]): string | undefined {
   for (const name of names) {
-    const value = process.env[name]?.trim();
+    const rawValue = process.env[name]?.trim();
+    if (!rawValue) continue;
+    const value = rawValue.replace(/^("|'|`)(.*)\1$/, "$2").trim();
     if (value) return value;
   }
   return undefined;
@@ -17,8 +19,8 @@ function readApiKey(...names: string[]): string | undefined {
 // Render and older deployments use OPENAI_API_KEY for the OpenRouter key.
 // Support both names so a correctly configured provider is not marked unavailable.
 const openRouterApiKey = readApiKey("OPENROUTER_API_KEY", "OPENAI_API_KEY");
-const groqApiKey = readApiKey("GROQ_API_KEY");
-const geminiApiKey = readApiKey("GEMINI_API_KEY");
+const groqApiKey = readApiKey("GROQ_API_KEY", "GROQ_API_TOKEN", "GROQ_KEY");
+const geminiApiKey = readApiKey("GEMINI_API_KEY", "GOOGLE_GEMINI_API_KEY", "GOOGLE_API_KEY");
 
 const openai = openRouterApiKey
   ? new OpenAI({ apiKey: openRouterApiKey, baseURL: "https://openrouter.ai/api/v1" })
