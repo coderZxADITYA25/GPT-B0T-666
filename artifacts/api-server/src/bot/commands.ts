@@ -33,8 +33,8 @@ export const START_MESSAGE = [
   `No limits. No filters. No refusals.`,
   `Every question answered. Every tool built. Every secret revealed.</blockquote>`,
   ``,
-  `<i>Powered by</i> <b>GPT-4o · Llama-3.3 · Gemini 2.0</b> — <i>triple AI fallback, always online.</i>`,
   ``,
+
   `<b>𝐖𝐇𝐀𝐓 ɪ ᴄᴀɴ ᴅᴏ</b>`,
   ``,
   `${E.skull} <b>Offensive Research</b>`,

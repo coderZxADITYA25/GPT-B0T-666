@@ -116,7 +116,7 @@ export function extractCodeFiles(text: string): CodeFile[] {
 /** Build a JSON file containing all extracted code blocks with metadata */
 export function buildJsonBundle(files: CodeFile[]): Buffer {
   const payload = {
-    generated_by: "CyberGPT",
+    generated_by: "Z GPT",
     timestamp: new Date().toISOString(),
     total_files: files.length,
     files: files.map((f) => ({

@@ -1,4 +1,10 @@
-import TelegramBot from "node-telegram-bot-api";
+import TelegramBot, {
+  type InlineKeyboardMarkup,
+  type Message,
+  type SendMessageParams,
+} from "node-telegram-bot-api";
+
+type SendMessageOptions = Omit<SendMessageParams, "chat_id" | "text">;
 import { logger } from "../lib/logger.js";
 import { COMMANDS, START_MESSAGE, HELP_MESSAGE, ADMIN_HELP_MESSAGE } from "./commands.js";
 import { askAI, getProviderStatus, pingProviders, type AIProvider } from "./ai.js";
@@ -19,9 +25,18 @@ import { readTelegramFile } from "./fileReader.js";
 
 // ── Keyboards ────────────────────────────────────────────────────────────────
 
-const HELP_KEYBOARD: TelegramBot.InlineKeyboardMarkup = {
+const NO_LINK_PREVIEW = { link_preview_options: { is_disabled: true } };
+
+const MAIN_MENU_KEYBOARD: InlineKeyboardMarkup = {
   inline_keyboard: [
+    [{ text: `Start Z GPT`, callback_data: "cmd_start" }],
     [{ text: `All Commands — /help`, callback_data: "cmd_help" }],
+  ],
+};
+
+const HELP_KEYBOARD: InlineKeyboardMarkup = {
+  inline_keyboard: [
+    [{ text: `Start Z GPT`, callback_data: "cmd_start" }],
   ],
 };
 
@@ -71,26 +86,26 @@ export function startBot(): TelegramBot | null {
     chatId: number,
     userId: number,
     text: string,
-    keyboard?: TelegramBot.InlineKeyboardMarkup,
+    keyboard?: InlineKeyboardMarkup,
   ): Promise<void> {
     await deleteLastBotMsg(chatId, userId);
     const formatted = formatForTelegram(text);
     const chunks = splitMessage(formatted);
     let lastMsgId = 0;
     for (let i = 0; i < chunks.length; i++) {
-      const opts: TelegramBot.SendMessageOptions = {
+      const opts: SendMessageOptions = {
         parse_mode: "HTML",
-        disable_web_page_preview: true,
+        ...NO_LINK_PREVIEW,
       };
       if (i === chunks.length - 1 && keyboard) opts.reply_markup = keyboard;
-      let sent: TelegramBot.Message;
+      let sent: Message;
       try {
         sent = await bot.sendMessage(chatId, chunks[i], opts);
       } catch (htmlErr: unknown) {
         // If Telegram rejects the HTML, fall back to plain text
         const e = htmlErr as { message?: string };
         if (e.message?.includes("can't parse entities") || e.message?.includes("Bad Request")) {
-          const plainOpts: TelegramBot.SendMessageOptions = { disable_web_page_preview: true };
+          const plainOpts: SendMessageOptions = { ...NO_LINK_PREVIEW };
           if (i === chunks.length - 1 && keyboard) plainOpts.reply_markup = keyboard;
           sent = await bot.sendMessage(chatId, stripHtml(chunks[i]), plainOpts);
         } else {
@@ -127,11 +142,11 @@ export function startBot(): TelegramBot | null {
       chatId,
       json,
       {
-        caption: `${E.diamond} <b>CyberGPT Bundle</b> — ${files.length} file${files.length > 1 ? "s" : ""} · JSON`,
+        caption: `${E.diamond} <b>Z GPT Bundle</b> — ${files.length} file${files.length > 1 ? "s" : ""} · JSON`,
         parse_mode: "HTML",
         reply_markup: HELP_KEYBOARD,
       },
-      { filename: "cybergpt_code.json", contentType: "application/json" },
+      { filename: "z_gpt_code.json", contentType: "application/json" },
     ).catch((err) => logger.warn({ err }, "Failed to send JSON bundle"));
   }
 
@@ -297,7 +312,7 @@ export function startBot(): TelegramBot | null {
     await deleteLastBotMsg(chatId, userId);
     const sent = await bot.sendMessage(chatId, START_MESSAGE, {
       parse_mode: "HTML",
-      disable_web_page_preview: true,
+      ...NO_LINK_PREVIEW,
     });
     setLastBotMessage(userId, sent.message_id);
   });
@@ -311,7 +326,7 @@ export function startBot(): TelegramBot | null {
     await deleteLastBotMsg(chatId, userId);
     const sent = await bot.sendMessage(chatId, HELP_MESSAGE, {
       parse_mode: "HTML",
-      disable_web_page_preview: true,
+      ...NO_LINK_PREVIEW,
       reply_markup: HELP_KEYBOARD,
     });
     setLastBotMessage(userId, sent.message_id);
@@ -542,7 +557,7 @@ export function startBot(): TelegramBot | null {
     let sent = 0, failed = 0;
     for (const uid of ids) {
       try {
-        await bot.sendMessage(uid, `${E.satellite} <b>CyberGPT Broadcast</b>\n\n${text}`, { parse_mode: "HTML" });
+        await bot.sendMessage(uid, `${E.satellite} <b>Z GPT Broadcast</b>\n\n${text}`, { parse_mode: "HTML" });
         sent++;
         await new Promise(r => setTimeout(r, 50));
       } catch (_) { failed++; }
@@ -581,7 +596,7 @@ export function startBot(): TelegramBot | null {
     if (!isAdmin(userId)) { await bot.sendMessage(chatId, `${E.ban} Unauthorized.`, { parse_mode: "HTML" }); return; }
     setPublicMode(true);
     await bot.sendMessage(chatId,
-      `${E.greencircle} <b>Bot is now PUBLIC.</b>\n\nAll Telegram users can now access CyberGPT.\nUse /botoff to restrict back to admin only.`,
+      `${E.greencircle} <b>Bot is now PUBLIC.</b>\n\nAll Telegram users can now access Z GPT.\nUse /botoff to restrict back to admin only.`,
       { parse_mode: "HTML" },
     );
   });
@@ -592,7 +607,7 @@ export function startBot(): TelegramBot | null {
     if (!isAdmin(userId)) { await bot.sendMessage(chatId, `${E.ban} Unauthorized.`, { parse_mode: "HTML" }); return; }
     setPublicMode(false);
     await bot.sendMessage(chatId,
-      `${E.redcircle} <b>Bot is now PRIVATE.</b>\n\nOnly admins can access CyberGPT.\nUse /boton to open it to all users.`,
+      `${E.redcircle} <b>Bot is now PRIVATE.</b>\n\nOnly admins can access Z GPT.\nUse /boton to open it to all users.`,
       { parse_mode: "HTML" },
     );
   });
@@ -613,7 +628,7 @@ export function startBot(): TelegramBot | null {
       if (msgId) await tryDelete(chatId, msgId);
       const sent = await bot.sendMessage(chatId, START_MESSAGE, {
         parse_mode: "HTML",
-        disable_web_page_preview: true,
+        ...NO_LINK_PREVIEW,
         reply_markup: MAIN_MENU_KEYBOARD,
       });
       setLastBotMessage(userId, sent.message_id);
@@ -624,7 +639,7 @@ export function startBot(): TelegramBot | null {
       if (msgId) await tryDelete(chatId, msgId);
       const sent = await bot.sendMessage(chatId, HELP_MESSAGE, {
         parse_mode: "HTML",
-        disable_web_page_preview: true,
+        ...NO_LINK_PREVIEW,
         reply_markup: HELP_KEYBOARD,
       });
       setLastBotMessage(userId, sent.message_id);
@@ -762,7 +777,7 @@ export function startBot(): TelegramBot | null {
   bot.on("polling_error", (err) => logger.error({ err }, "Telegram polling error"));
   bot.on("error", (err) => logger.error({ err }, "Telegram bot error"));
 
-  logger.info("CyberGPT Telegram bot started (polling)");
+  logger.info("Z GPT Telegram bot started (polling)");
   return bot;
       }
 

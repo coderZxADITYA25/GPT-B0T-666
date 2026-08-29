@@ -6,17 +6,26 @@ import { getSession, addMessage } from "./session.js";
 import { logger } from "../lib/logger.js";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
-const openai = process.env.OPENROUTER_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENROUTER_API_KEY, baseURL: "https://openrouter.ai/api/v1" })
+function readApiKey(...names: string[]): string | undefined {
+  for (const name of names) {
+    const value = process.env[name]?.trim();
+    if (value) return value;
+  }
+  return undefined;
+}
+
+// Render and older deployments use OPENAI_API_KEY for the OpenRouter key.
+// Support both names so a correctly configured provider is not marked unavailable.
+const openRouterApiKey = readApiKey("OPENROUTER_API_KEY", "OPENAI_API_KEY");
+const groqApiKey = readApiKey("GROQ_API_KEY");
+const geminiApiKey = readApiKey("GEMINI_API_KEY");
+
+const openai = openRouterApiKey
+  ? new OpenAI({ apiKey: openRouterApiKey, baseURL: "https://openrouter.ai/api/v1" })
   : null;
 
-const groq = process.env.GROQ_API_KEY
-  ? new Groq({ apiKey: process.env.GROQ_API_KEY })
-  : null;
-
-const gemini = process.env.GEMINI_API_KEY
-  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-  : null;
+const groq = groqApiKey ? new Groq({ apiKey: groqApiKey }) : null;
+const gemini = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null;
 
 const GEMINI_SAFETY_SETTINGS = [
   { category: HarmCategory.HARM_CATEGORY_HARASSMENT,        threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -31,9 +40,9 @@ const CONCISE_SUFFIX =
 // ── Provider key status (for /status command) ────────────────────────────────
 export function getProviderStatus() {
   return {
-    groq:   !!process.env.GROQ_API_KEY,
-    gemini: !!process.env.GEMINI_API_KEY,
-    openai: !!process.env.OPENROUTER_API_KEY,
+    groq:   !!groqApiKey,
+    gemini: !!geminiApiKey,
+    openai: !!openRouterApiKey,
   };
 }
 

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: cybergpt-bot
+    name: z-gpt-bot
     runtime: node
     plan: free
     region: oregon
@@ -13,6 +13,8 @@ services:
       - key: PORT
         value: 10000
       - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: OPENROUTER_API_KEY
         sync: false
       - key: OPENAI_API_KEY
         sync: false
