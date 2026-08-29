@@ -29,6 +29,9 @@ const openai = openRouterApiKey
 const groq = groqApiKey ? new Groq({ apiKey: groqApiKey }) : null;
 const gemini = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null;
 
+const GROQ_MODEL = "openai/gpt-oss-120b";
+const GROQ_MODEL_LABEL = "Groq GPT-OSS 120B";
+
 const GEMINI_SAFETY_SETTINGS = [
   { category: HarmCategory.HARM_CATEGORY_HARASSMENT,        threshold: HarmBlockThreshold.BLOCK_NONE },
   { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,       threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -90,22 +93,22 @@ export async function pingProviders(): Promise<PingResult[]> {
 
   // Ping Groq
   if (!groq) {
-    results.push({ name: "Groq Llama-3.3", configured: false, ok: false, ms: null, error: "Not configured" });
+    results.push({ name: GROQ_MODEL_LABEL, configured: false, ok: false, ms: null, error: "Not configured" });
   } else {
     const t = Date.now();
     try {
       const res = await groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
+        model: GROQ_MODEL,
         max_tokens: 5,
         messages: [{ role: "user", content: PING_MSG }],
       });
       const text = res.choices[0]?.message?.content ?? "";
-      results.push({ name: "Groq Llama-3.3", configured: true, ok: !!text, ms: Date.now() - t });
+      results.push({ name: GROQ_MODEL_LABEL, configured: true, ok: !!text, ms: Date.now() - t });
     } catch (err: unknown) {
       const e = err as { message?: string; status?: number };
       const isRate = e?.status === 429;
       results.push({
-        name: "Groq Llama-3.3", configured: true, ok: false, ms: Date.now() - t,
+        name: GROQ_MODEL_LABEL, configured: true, ok: false, ms: Date.now() - t,
         error: isRate ? "Rate limited (wait 60s)" : e.message?.slice(0, 60),
       });
     }
@@ -164,7 +167,7 @@ async function tryGroq(
 ): Promise<string> {
   if (!groq) throw new Error("Groq not configured");
   const response = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: GROQ_MODEL,
     max_tokens: maxTokens,
     messages: messages as Parameters<typeof groq.chat.completions.create>[0]["messages"],
   });
